@@ -3,7 +3,7 @@ const axios = require("axios");
 /**
  * Makes a get request that returns the json response
  *
- * The function is CURRIED to avoid allow reusing the
+ * The function is CURRIED to allow reusing the
  * function without having to repeat the first parameter
  *
  * You might want to change this up to make it more
@@ -55,7 +55,7 @@ const paymentFunctions = instance => {};
  * attached
  * @param {string} email
  * @param {string} key
- * @param {Object} [options={}] Selly instance
+ * @param {Object} [options={}] Selly options
  */
 const create = (email, key, options = {}) => {
   // TODO: Check to make sure email and key aren't empty first
