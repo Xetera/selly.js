@@ -22,7 +22,11 @@ const errors = {
   400: "Bad Request",
   401: "Unauthorized - Unable to authenticate",
   403: "Forbidden",
-  404: "Not found"
+  404: "Not found",
+  406: "Not a JSON",
+  429: "Too many requests",
+  500: "Problem on Selly's side.",
+  503: "Selly is down"
 };
 
 /**
@@ -59,6 +63,7 @@ const paymentFunctions = instance => {};
  */
 const create = (email, key, options = {}) => {
   // TODO: Check to make sure email and key aren't empty first
+ 
   const authorization = encode64(`${email}:${key}`);
 
   const selly = axios.create({
