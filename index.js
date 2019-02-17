@@ -1,17 +1,10 @@
 const axios = require("axios");
-const ptre = require('path-to-regexp');
+const { encode64, replacePlaceholder } = require('./utils');
 
-const generate = method => url => ({
-	method,
-	url
-});
+const generate = method => url => ({ method, url });
 
 const get = generate("get");
 const del = generate("delete");
-
-const withQueryParams = params => ({
-	...params
-});
 
 /**
  * data sent along with post / put requests require
@@ -23,9 +16,9 @@ const withQueryParams = params => ({
  */
 const withBody = key => ({ body: true, key });
 
-const generateMutation = method => (url, { key }) => ({
+const generateMutation = method => (url, opts = {}) => ({
 	...generate(method)(url),
-	...withBody(key)
+	...withBody(opts.key)
 });
 
 const post = generateMutation("post");
@@ -36,13 +29,13 @@ const put = generateMutation("put");
 const methods = {
 	getCoupons: get("/coupons"),
 	getCoupon: get("/coupon/:id"),
-	createCoupon: post("/coupons", { key: "coupon"}),
+	createCoupon: post("/coupons", { key: "coupon" }),
 	updateCoupon: put("/coupons/:id", { key: "coupon" }),
 	getOrders: get("/orders"),
 	getOrder: get("/orders/:id"),
 	getProducts: get("/products"),
-	getProduct: get("/product/:id"),
-	createProduct: post("/products"),
+	getProduct: get("/products/:id"),
+	createProduct: post("/products", { key: "product" }),
 	updateProduct: put("/products", { key: "product" }),
 	deleteProduct: del("/products/:id"),
 	getProductGroups: get("/product_groups"),
@@ -54,8 +47,18 @@ const methods = {
 };
 
 const modifyError = ({ response }) => ({
-	error: response.data.message,
+	error: response.statusText,
 	status: response.status
+});
+
+/**
+ * This could be more generic but fuck it
+ * @param instance
+ */
+const generateQuery = instance => ({ method, url, body, key }) => instance({
+	method,
+	url,
+	data: key ? ({ [key]: body }) : body
 });
 
 /**
@@ -67,14 +70,16 @@ const modifyError = ({ response }) => ({
  * You might want to change this up to make it more
  * generic so it can support more than just GET
  * @param {AxiosInstance} instance
- * @returns {function(string): AxiosResponse}
+ * @returns {function(string): Promise<AxiosResponse>}
  */
-const query = instance => endpoint =>
-	instance.get(endpoint)
+const query = instance => (options) => {
+	const action = generateQuery(instance);
+	return action(options)
 		.then(res => res.data)
 		.catch(e => {
 			throw modifyError(e)
 		});
+};
 
 /**
  * Customize this as you need, you'll need to handle errors as necessary
@@ -83,36 +88,11 @@ const errors = {
 	400: "Bad Request",
 	401: "Unauthorized - Unable to authenticate",
 	403: "Forbidden",
-	404: "Not found"
-};
-
-/**
- * Encodes input string in base64
- * @param {string} input
- */
-const encode64 = input => Buffer.from(input).toString("base64");
-
-/**
- * Handler for coupon related functions
- *
- * @param {AxiosInstance} instance
- */
-const couponFunctions = instance => {
-	// currying the query function
-	const get = query(instance);
-	return {
-		coupons: () => get("/coupons"),
-		coupon: id => get(`/coupons/${id}`)
-	};
-};
-
-const productFunctions = instance => {
-};
-const productGroupFunctions = instance => {
-};
-const queryFunctions = instance => {
-};
-const paymentFunctions = instance => {
+	404: "Not found",
+	406: "Not a JSON",
+	429: "Too many requests",
+	500: "Problem on Selly's side.",
+	503: "Selly is down"
 };
 
 /**
@@ -127,7 +107,7 @@ const create = (email, key, options = {}) => {
 	const authorization = encode64(`${email}:${key}`);
 
 	const selly = axios.create({
-		baseURL: "http://selly.gg/api/v2/",
+		baseURL: "https://selly.gg/api/v2/",
 		headers: {
 			Authorization: `Basic ${authorization}`,
 			"User-Agent": options.userAgent || "selly.js"
@@ -135,24 +115,30 @@ const create = (email, key, options = {}) => {
 	});
 
 
-	const get = query(selly);
+	const request = query(selly);
 
-	return Object.entries(endpoints).reduce((all, [key, endpoint]) => {
-		const re = ptre(endpoint);
+	return Object.entries(methods).reduce((all, [key, endpoint]) => {
+		const method = (idOrBody, bodyInput) => {
+			let url, body;
 
-		return ({
+			const { method, key } = endpoint;
+			if (typeof idOrBody === "string") {
+				url = replacePlaceholder(endpoint.url, idOrBody);
+				console.log(url)
+				body = { [endpoint.key]: bodyInput };
+			} else {
+				url = endpoint.url;
+				body = idOrBody;
+			}
+
+			return request({ body, url, method, key })
+		};
+
+		return {
 			...all,
-			[key]: (id, ...input) => get(re)
-		})
-	});
-
-	// // you can use reduce here to avoid this repetition
-	// return {
-	// 	...couponFunctions(selly),
-	// 	...productFunctions(selly),
-	// 	...productGroupFunctions(selly),
-	// 	...queryFunctions(selly)
-	// };
+			[key]: method
+		};
+	}, {});
 };
 
 module.exports = { create };

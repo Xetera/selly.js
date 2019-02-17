@@ -4,5 +4,5 @@ const { create } = require("./index.js");
 // ----- test functions ------ REMOVE ON RELEASE
 const instance = create(email, key);
 
-instance.coupons().then(console.log);
+instance.getQuery("84e1560c").then(console.log, console.log);
 // ----- test functions ------
