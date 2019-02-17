@@ -95,7 +95,7 @@ const query = instance => (options) => instance(options)
     throw modifyError(e)
   });
 
-const create = (email, key, options = {}) => {
+module.exports = (email, key, options = {}) => {
   if (!email) {
     throw new Error("An email is required for selly");
   }
@@ -116,5 +116,3 @@ const create = (email, key, options = {}) => {
 
   return createMethods(selly);
 };
-
-module.exports = { create };
