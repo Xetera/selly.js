@@ -1,5 +1,7 @@
 declare module "selly.js" {
   interface DBIndices {
+    // sorry these are supposed to be dates but I can't
+    // be bothered to convert them, sorry
     created_at: string;
     updated_at: string;
   }
@@ -20,11 +22,9 @@ declare module "selly.js" {
     id: string;
     coupon: string;
     discount?: number;
-    max_use: number;
+    max_use: number | null;
     uses: number;
     product_ids: string[];
-    // sorry these are supposed to be dates but I can't
-    // be bothered to convert them
   }
 
   export interface Order extends DBIndices {
@@ -39,12 +39,12 @@ declare module "selly.js" {
     gateway: Gateways;
     risk_level: number;
     status: number;
-    delivered: string;
+    delivered: string | null;
     crypto_address: string;
     crypto_value: number | null;
     crypto_received: number;
     crypto_confirmations: number;
-    crypto_channel?: string;
+    crypto_channel: string | null;
     referral: string | null;
     exchnge_rate: number;
     custom: object;
@@ -59,9 +59,22 @@ declare module "selly.js" {
     currency: string;
     product_type: number;
     getways: Gateways[];
+    private: boolean;
+    unlisted: boolean;
+    vpn_block: boolean;
+    seller_note: string | null;
+    maximum_quantity: number | null;
+    minimum_quantity: number | null;
+    image_url: string | null;
+    image: string | null;
+    theme: number;
+    crypto_confirmations: number;
+    max_risk_level: number;
+    dynamic_url: string | null;
     info: string;
     stock_delimiter: string;
-    webhook_url: string;
+    // attachment: string | null? idk
+    webhook_url: string | null;
     custom: object;
   }
 
@@ -76,6 +89,7 @@ declare module "selly.js" {
     secret: string;
     status: number;
     email: string;
+    message: string | null;
     ip_address: string;
     country_code: string;
     avatar_url: string;
@@ -131,7 +145,22 @@ declare module "selly.js" {
       } & DBIndices>;
     }
 
-    createPayment(paymentObject): Promise<Payment>
+    createPayment(paymentObject: Partial<Payment>): Promise<{
+      status: number;
+      crypto_address: string | null;
+      crypto_value: number | null;
+      confirmations_needed: number;
+      id: string;
+      product_id: string;
+      email: string;
+      value: string;
+      quantity: number;
+      currency: string;
+      gateway: Gateways;
+      crypto_channel: string | null;
+      exchange_rate: string;
+      url: string;
+    } & DBIndices>
 
     deletePayment(id): Promise<{ status: boolean }>
   }
