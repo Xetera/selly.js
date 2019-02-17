@@ -36,7 +36,7 @@ const methods = {
 	getProducts: get("/products"),
 	getProduct: get("/products/:id"),
 	createProduct: post("/products", { key: "product" }),
-	updateProduct: put("/products", { key: "product" }),
+	updateProduct: put("/products/:id", { key: "product" }),
 	deleteProduct: del("/products/:id"),
 	getProductGroups: get("/product_groups"),
 	getProductGroup: get("/product_groups/:id"),
@@ -55,10 +55,10 @@ const modifyError = ({ response }) => ({
  * This could be more generic but fuck it
  * @param instance
  */
-const generateQuery = instance => ({ method, url, body, key }) => instance({
+const generateQuery = instance => ({ method, url, body }) => instance({
 	method,
 	url,
-	data: key ? ({ [key]: body }) : body
+	data: body,
 });
 
 /**
@@ -79,20 +79,6 @@ const query = instance => (options) => {
 		.catch(e => {
 			throw modifyError(e)
 		});
-};
-
-/**
- * Customize this as you need, you'll need to handle errors as necessary
- */
-const errors = {
-	400: "Bad Request",
-	401: "Unauthorized - Unable to authenticate",
-	403: "Forbidden",
-	404: "Not found",
-	406: "Not a JSON",
-	429: "Too many requests",
-	500: "Problem on Selly's side.",
-	503: "Selly is down"
 };
 
 /**
@@ -117,15 +103,20 @@ const create = (email, key, options = {}) => {
 
 	const request = query(selly);
 
-	return Object.entries(methods).reduce((all, [key, endpoint]) => {
+	return Object.entries(methods).reduce((all, [methodName, endpoint]) => {
 		const method = (idOrBody, bodyInput) => {
 			let url, body;
-
 			const { method, key } = endpoint;
-			if (typeof idOrBody === "string") {
+			const requiresId = endpoint.url.includes(':');
+			const hasId = typeof idOrBody === "string";
+
+			if (requiresId && !hasId) {
+				return Promise.reject(`The method ${methodName} requires an id but none was given.`);
+			}
+
+			if (hasId) {
 				url = replacePlaceholder(endpoint.url, idOrBody);
-				console.log(url)
-				body = { [endpoint.key]: bodyInput };
+				body = endpoint.key ? { [endpoint.key]: bodyInput } : bodyInput;
 			} else {
 				url = endpoint.url;
 				body = idOrBody;
@@ -136,7 +127,7 @@ const create = (email, key, options = {}) => {
 
 		return {
 			...all,
-			[key]: method
+			[methodName]: method
 		};
 	}, {});
 };
