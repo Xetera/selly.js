@@ -7,7 +7,7 @@ A simple selly API wrapper
 ```js
 const selly = require('selly.js');
 
-const api = selly.create("your@email.here", "your-api-key-here");
+const api = selly("your@email.here", "your-api-key-here");
 
 api.getProducts().then(products => console.log(products));
 ```
