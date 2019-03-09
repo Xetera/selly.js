@@ -1,22 +1,23 @@
 {
   "name": "selly.js",
-  "version": "1.0.3",
+  "version": "2.0.4",
   "description": "Simple Selly API wrapper for NodeJS",
   "main": "index.js",
+  "types": "./typings.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/icourt1/selly.js.git"
+    "url": "git+https://github.com/xetera/selly.js.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Xetera",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/icourt1/selly.js/issues"
+    "url": "https://github.com/xetera/selly.js/issues"
   },
-  "homepage": "https://github.com/icourt1/selly.js#readme",
+  "homepage": "https://github.com/xetera/selly.js#readme",
   "dependencies": {
     "axios": "^0.18.0"
   }
