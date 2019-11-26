@@ -26,7 +26,7 @@ const put = generateMutation("put");
 
 const methods = {
   getCoupons: get("/coupons"),
-  getCoupon: get("/coupon/:id"),
+  getCoupon: get("/coupons/:id"),
   createCoupon: post("/coupons", { key: "coupon" }),
   updateCoupon: put("/coupons/:id", { key: "coupon" }),
   getOrders: get("/orders"),
